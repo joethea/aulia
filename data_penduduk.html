@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tampilkan Data Penduduk dengan Pagination dan Pencarian</title>
+    <style>
+        /* Styling untuk body */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    background-color: #ecf0f1;
+    font-size: 1vw;
+}
+
+/* Styling untuk header */
+header {
+    background-color: #2c3e50;
+    color: white;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Styling untuk elemen di dalam header */
+.header-left, .header-center, .header-right {
+    display: flex;
+    align-items: center;
+}
+
+/* Styling spesifik untuk bagian kiri (header-left) */
+.header-left {
+    flex: 1;
+}
+
+.header-left button {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-right: 15px;
+    transition: background-color 0.3s;
+}
+
+.header-left button:hover {
+    background-color: #c0392b;
+}
+
+.header-left h2 {
+    font-size: 1.5rem;
+    margin: 0;
+}
+
+/* Styling spesifik untuk bagian tengah (header-center) */
+.header-center {
+    flex: 2;
+    justify-content: center;
+}
+
+.header-center select, .header-center input {
+    padding: 8px;
+    margin-right: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1rem;
+}
+
+.header-center button {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+.header-center button:hover {
+    background-color: #2980b9;
+}
+
+/* Styling spesifik untuk bagian kanan (header-right) */
+.header-right {
+    flex: 1;
+    justify-content: flex-end;
+}
+
+.header-right button {
+    background-color: #2ecc71;
+    color: white;
+    border: none;
+    padding: 10px 12px;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 1.2rem;
+    transition: background-color 0.3s;
+}
+
+.header-right button:hover {
+    background-color: #27ae60;
+}
+
+/* Styling untuk main content */
+main {
+    width: 100%;
+    margin-top: 60px;
+    padding: 10px;
+}
+
+/* Styling untuk tabel */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+table, th, td {
+    border: 1px solid #ddd;
+}
+
+th, td {
+    padding: 8px;
+    text-align: center;
+}
+
+th {
+    background-color: #34495e;
+    color: white;
+}
+
+/* Efek hover untuk baris tabel */
+table tbody tr:hover {
+    background-color: #ebe8d5; /* Biru muda saat dihover */
+    cursor: pointer;
+    /*transform: scale(1.02); Sedikit memperbesar baris saat hover */
+    transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out; /* Transisi halus */
+}
+
+/* Gaya untuk baris yang dipilih */
+table tbody tr.selected {
+    background-color: #b2f7b2; /* Hijau muda untuk baris yang dipilih */
+    color: #2c3e50; /* Warna teks lebih gelap */
+    font-weight: bold;
+    transition: background-color 0.3s ease-in-out; /* Transisi warna latar belakang */
+}
+
+/* Responsif untuk perangkat kecil */
+@media (max-width: 768px) {
+    table, th, td {
+        font-size: 0.9em; /* Sesuaikan ukuran font untuk layar kecil */
+    }
+}
+
+
+
+
+/* Styling untuk pagination */
+.pagination {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+	
+}
+
+.pagination button {
+    margin: 0 5px;
+    padding: 5px 10px;
+	cursor: pointer;
+}
+
+/* Styling untuk progress bar */
+#progress {
+    width: 100%;
+    height: 10px;
+    background: #ddd;
+    display: none;
+    margin-top: 5px;
+}
+
+#progress-bar {
+    height: 100%;
+    width: 5px;
+    background: #19cf9e;
+}
+
+
+
+
+
+
+
+/*======================================================================
+ Styling untuk popup form */
+.form-popup {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #f7f7f7;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    z-index: 1001;
+    padding: 25px;
+    width: 400px;
+}
+
+.form-popup input[type="text"],
+.form-popup input[type="date"],
+.form-popup input[type="email"],
+.form-popup input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+
+#btn-simpanPP {
+    background-color: #47b33b; /* Warna latar kuning kehijauan */
+    color: #fff; /* Warna teks putih untuk kontras */
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px; /* Membulatkan sudut tombol */
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Bayangan untuk efek 3D */
+    transition: transform 0.2s ease, background-color 0.3s ease, box-shadow 0.2s ease; /* Transisi halus */
+}
+
+/* Hover effect untuk tombol "Simpan" */
+#btn-simpanPP:hover {
+    background-color: #58d94a; /* Warna lebih gelap saat hover */
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2); /* Perbesar bayangan saat hover */
+}
+
+/* Zoom effect saat di-klik untuk tombol "Simpan" */
+#btn-simpanPP:active {
+    transform: scale(0.95); /* Sedikit mengecil saat di-klik */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Perkecil bayangan saat di-klik */
+}
+
+#btn-batalPP {
+    background-color: #5e5e5e; /* Warna latar abu-abu */
+    color: #fff; /* Warna teks putih untuk kontras */
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px; /* Membulatkan sudut tombol */
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Bayangan untuk efek 3D */
+    transition: transform 0.2s ease, background-color 0.3s ease, box-shadow 0.2s ease; /* Transisi halus */
+}
+
+/* Hover effect untuk tombol "Tutup" */
+#btn-batalPP:hover {
+    background-color: #4a4a4a; /* Warna lebih gelap saat hover */
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2); /* Perbesar bayangan saat hover */
+}
+
+/* Zoom effect saat di-klik untuk tombol "Tutup" */
+#btn-batalPP:active {
+    transform: scale(0.95); /* Sedikit mengecil saat di-klik */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Perkecil bayangan saat di-klik */
+}
+
+
+
+
+/*======================================================== Popup untuk menampilkan data yang dipilih */
+.data-popup {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #ffffff;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    z-index: 1001;
+    padding: 20px;
+    width: 500px;
+}
+
+.data-popup table {
+    width: 100%;
+}
+
+.data-popup th, .data-popup td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+	
+
+/* Responsivitas */
+@media (max-width: 768px) {
+    .header-left, .header-center, .header-right {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .header-left, .header-right {
+        margin-bottom: 10px;
+    }
+
+    header {
+        flex-direction: column;
+    }
+
+    .header-center {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .header-center select, .header-center input {
+        width: 90%;
+    }
+
+}
+
+    </style>
+</head>
+<body>
+
+<header>
+<div class="header-left">
+
+    <button onclick="goBack('dasboard.html')">Back</button>
+	    <h2>Data Penduduk</h2>
+</div>
+	<div class="header-center">
+    <select id="functionSelect" onchange="executeFunction()">
+        <option value="">Pilih Gampong</option>
+        <option value="function1">ABEUK JALOH</option>
+        <option value="function2">ALUE BAYEU UTANG</option>
+        <option value="function3">ALUE BIE PUSONG</option>
+        <option value="function4">ALUE BUYA</option>
+        <option value="function5">ALUE BUYA PASI</option>
+        <option value="function6">ALUE KUTA</option>
+        <option value="function7">BADA BARAT</option>
+        <option value="function8">BADA TIMU</option>
+        <option value="function9">BARAT LANYAN</option>
+        <option value="function10">BUGAK BLANG</option>
+        <option value="function11">BUGAK KRUENG</option>
+        <option value="function12">BUGAK KRUENG MATE</option>
+        <option value="function13">BUGAK MESJID</option>
+        <option value="function14">BUGENG</option>
+        <option value="function15">GAMPONG MEULINTEUNG</option>
+        <option value="function16">GEUNDOT</option>
+        <option value="function17">JANGKA ALUE</option>
+        <option value="function18">JANGKA ALUE BLE</option>
+        <option value="function19">JANGKA ALUE U</option>
+        <option value="function20">JANGKA KEUTAPANG</option>
+        <option value="function21">JANGKA MESJID</option>
+        <option value="function22">KAMBUK</option>
+        <option value="function23">KUALA CEURAPE</option>
+        <option value="function24">LAMKUTA</option>
+        <option value="function25">LAMPOH RAYEUK</option>
+        <option value="function26">LHOK BUGENG</option>
+        <option value="function27">LINGGONG</option>
+        <option value="function28">LUENG</option>
+        <option value="function29">MEUNASAH KRUENG</option>
+        <option value="function30">PANTE PAKU</option>
+        <option value="function31">PANTE PEUSANGAN</option>
+        <option value="function32">PANTE RANUB</option>
+        <option value="function33">PANTE SUKON</option>
+        <option value="function34">PAYA BIENG</option>
+        <option value="function35">PULO BLANG</option>
+        <option value="function36">PULO IBOH</option>
+        <option value="function37">PULO REUDEUP</option>
+        <option value="function38">PULO SEUNA</option>
+        <option value="function39">PULO U</option>
+        <option value="function40">PUNJOT</option>
+        <option value="function41">PULO PINEUNG MNS DUA</option>
+        <option value="function42">RUSEB ARA</option>
+        <option value="function43">RUSEB DAYAH</option>
+        <option value="function44">TANJUNGAN</option>
+        <option value="function45">TANOH ANOE</option>
+        <option value="function46">ULEU CEUE</option>
+    </select>
+
+
+    <input type="text" id="search" placeholder="Cari nama..." />
+    <button onclick="showSelectedData()">PROSESS</button>
+	</div>
+	<div class="header-right">
+    <button onclick="toggleForm()">📝</button>
+	</div>
+</header>
+
+<main>
+    <div id="progress">
+        <div id="progress-bar"></div>
+    </div>
+
+    <table id="data-table">
+        <thead>
+            <tr>
+                <th>Kode</th>
+                <th>KK</th>
+                <th>NIK</th>
+                <th>Nama</th>
+                <th>Tempat Lahir</th>
+                <th>Tanggal Lahir</th>
+                <th>Status</th>
+                <th>Gender</th>
+                <th>Pekerjaan</th>
+                <th>Alamat Dusun</th>
+                <th>Desa</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody id="data-body">
+            <!-- Data akan ditambahkan di sini -->
+        </tbody>
+    </table>
+
+    <div class="pagination" id="pagination">
+        <button onclick="changePage('prev')">BACK</button>
+        <span id="page-numbers"></span>
+        <button onclick="changePage('next')">NEXT</button>
+    </div>
+</main>
+
+<!-- Form Popup -->
+<div class="form-popup" id="form-popup">
+    <h3>Entri Data Penduduk</h3>
+    <input type="text" id="kk" placeholder="KK" required />
+    <input type="text" id="nik" placeholder="NIK" required />
+    <input type="text" id="nama" placeholder="Nama" required />
+    <input type="text" id="tempatlahir" placeholder="Tempat Lahir" required />
+    <input type="date" id="tgllahir" placeholder="Tanggal Lahir" required />
+    <input type="text" id="status" placeholder="Status" required />
+    <input type="text" id="jeniskelamin" placeholder="Jenis Kelamin" required />
+    <input type="text" id="pekerjaan" placeholder="Pekerjaan" required />
+    <input type="text" id="alamatdusun" placeholder="Alamat Dusun" required />
+    <input type="text" id="desa" placeholder="Desa" required />
+    <button id="btn-simpanPP" onclick="addData()">Simpan</button>
+    <button id="btn-batalPP" onclick="toggleForm()">Tutup</button>
+</div>
+
+<!-- Popup untuk menampilkan data yang dipilih -->
+<div class="data-popup" id="data-popup">
+    <h3>Data Penduduk Terpilih</h3>
+    <table>
+        <tr>
+            <th>Kode</th>
+            <th>KK</th>
+            <th>NIK</th>
+            <th>Nama</th>
+            <th>Tempat Lahir</th>
+            <th>Tanggal Lahir</th>
+            <th>Status</th>
+            <th>Gender</th>
+            <th>Pekerjaan</th>
+            <th>Alamat Dusun</th>
+            <th>Desa</th>
+        </tr>
+        <tbody id="selected-data-body">
+            <!-- Data yang dipilih akan ditampilkan di sini -->
+        </tbody>
+    </table>
+    <button onclick="closeDataPopup()">Tutup</button>
+    <button onclick="continueToNextPage()">LANJUT</button> <!-- Tombol LANJUT ditambahkan -->
+</div>
+
+<script>
+    let currentPage = 1;
+    const rowsPerPage = 10;
+    let data = [];
+    let filteredData = [];
+    let selectedRowData = null; // Menyimpan data baris yang dipilih
+
+    // Fungsi untuk memanggil API berdasarkan pilihan combobox
+    function executeFunction() {
+        const selectedFunction = document.getElementById("functionSelect").value;
+
+        if (selectedFunction) {
+            const url = window[selectedFunction](); // Panggil fungsi yang dipilih
+            fetchDataFromUrl(url);
+        } else {
+            alert("Pilih fungsi terlebih dahulu");
+        }
+    }
+
+    function function1() {
+        return "https://script.google.com/macros/s/AKfycbxIRSy8_6WrrEKauLb6At-fQuYzMcZE4D7cR7eKGfIh0m6qNrYOWGgi0vlxcCHtMdN5Aw/exec";
+    }
+    function function2() {
+        return "https://script.google.com/macros/s/AKfycbximJwWq75rQ0Uel9QbfrwL2OusQLmEUu7QYgGxT3YvmsiwNlRVd1DKw0O37nd0xxJJ/exec";
+    }
+    function function3() {
+        return "https://script.google.com/macros/s/AKfycbwg2wobqxLNA4uxM2iRVnrsH38NZTxXeVcNZQdzXDGbdAvggoWPcIMEIOb671HfdkHq/exec";
+    }
+    function function4() {
+        return "https://script.google.com/macros/s/AKfycbzdnXjatnJpr9ArJZLpHZjaitOlCd2V4IJL7-8xnDu5bT073Zv8EZ-KgQtSX2CHEVCI/exec";
+    }
+    function function5() {
+        return "https://script.google.com/macros/s/AKfycbzhD5BDaOlyFDvExlLihoLMNeDpKlXVcdl4ZFUbyAuDenRp4OkV8EYbxDwRUBKHTaY/exec";
+    }
+    function function6() {
+        return "https://script.google.com/macros/s/AKfycbxo4u5jNB7KEKHHklRxQ_y20rHx06atHfANljkhguw7_yMnz-Tf79--ZdWAMDcHIgL4/exec";
+    }
+			function function11() {
+        return "https://script.google.com/macros/s/AKfycbz7NI1S3-tY3y5MlwhZoH4D_htbjI1INgHZ732nIqFYihaRPY1BZ2kuau-nnkCqh4aJTA/exec";
+    }
+
+    async function fetchDataFromUrl(url) {
+        document.getElementById('progress').style.display = 'block';
+        const progressBar = document.getElementById('progress-bar');
+        progressBar.style.width = '0%';
+
+        let progress = 1;
+        const interval = setInterval(() => {
+            progressBar.style.width = progress + '%';
+            if (progress >= 100) {
+                clearInterval(interval);
+            } else {
+                progress++;
+            }
+        }, 10);
+
+        try {
+            const response = await fetch(url);
+            data = await response.json();
+            filteredData = data;
+            displayData();
+        } catch (error) {
+            console.error('Error fetching data:', error);
+        } finally {
+            clearInterval(interval);
+            document.getElementById('progress').style.display = 'none';
+        }
+
+        document.getElementById('search').value = '';
+        document.getElementById('search').focus();
+    }
+
+    function displayData() {
+        const tbody = document.getElementById('data-body');
+        tbody.innerHTML = '';
+        const startIndex = (currentPage - 1) * rowsPerPage;
+        const endIndex = Math.min(startIndex + rowsPerPage, filteredData.length);
+
+        for (let i = startIndex; i < endIndex; i++) {
+			const formattedDate = filteredData[i].tgllahir;  //const formattedDate = formatDate(filteredData[i].tgllahir);
+            const row = `<tr onclick="selectRow(this)">
+                <td>${filteredData[i].kode}</td>
+                <td>${filteredData[i].kk}</td>
+                <td>${filteredData[i].nik}</td>
+                <td>${filteredData[i].nama}</td>
+                <td>${filteredData[i].tempatlahir}</td>
+				<td>${formatDate(filteredData[i].tgllahir)}</td>
+                <td>${filteredData[i].status}</td>
+                <td>${filteredData[i].jeniskelamin}</td>
+                <td>${filteredData[i].pekerjaan}</td>
+                <td>${filteredData[i].alamatdusun}</td>
+                <td>${filteredData[i].desa}</td>
+                <td>Aksi</td>
+            </tr>`;
+            tbody.innerHTML += row;
+        }
+
+        setupPagination();
+    }
+
+    function selectRow(row) {
+        const allRows = document.querySelectorAll('#data-body tr');
+        allRows.forEach(r => r.classList.remove('selected'));
+        row.classList.add('selected');
+        selectedRowData = Array.from(row.children).map(cell => cell.textContent); // Menyimpan data baris yang dipilih
+    }
+
+    function setupPagination() {
+        const pagination = document.getElementById('page-numbers');
+        pagination.innerHTML = '';
+        const pageCount = Math.ceil(filteredData.length / rowsPerPage);
+
+        const startPage = Math.max(1, currentPage - 2);
+        const endPage = Math.min(pageCount, startPage + 4);
+
+        for (let i = startPage; i <= endPage; i++) {
+            const pageButton = document.createElement('button');
+            pageButton.innerText = i;
+            pageButton.onclick = () => changePage(i);
+            pagination.appendChild(pageButton);
+        }
+    }
+
+    function changePage(direction) {
+        const pageCount = Math.ceil(filteredData.length / rowsPerPage);
+
+        if (direction === 'prev' && currentPage > 1) {
+            currentPage--;
+        } else if (direction === 'next' && currentPage < pageCount) {
+            currentPage++;
+        } else if (typeof direction === 'number') {
+            currentPage = direction;
+        }
+
+        displayData();
+    }
+
+    document.getElementById('search').addEventListener('input', function () {
+        const searchTerm = this.value.toLowerCase();
+        filteredData = data.filter(item => item.nama.toLowerCase().includes(searchTerm));
+        currentPage = 1; // Reset to first page after search
+        displayData();
+    });
+
+    function toggleForm() {
+        const formPopup = document.getElementById('form-popup');
+        formPopup.style.display = formPopup.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function goBack() {
+        window.history.back();
+    }
+
+  function formatDate(dateString) {
+        const options = { day: '2-digit', month: '2-digit', year: 'numeric' }; // Format 'dd mmmm yyyy'
+        const date = new Date(dateString);
+        return date.toLocaleDateString('id-ID', options);
+    }
+	
+	
+
+    function showSelectedData() {
+        if (!selectedRowData) {
+            alert('Silakan pilih baris terlebih dahulu.');
+            return;
+        }
+
+        // Filter data berdasarkan KK yang dipilih
+        const selectedKK = selectedRowData[1]; // Mengambil KK dari data yang dipilih
+        const relatedData = data.filter(item => item.kk === selectedKK);
+
+        // Simpan data yang memiliki KK yang sama ke URL params
+        const urlParams = new URLSearchParams();
+        relatedData.forEach(item => {
+            urlParams.append('data[]', JSON.stringify(item)); // Mengirim setiap item sebagai JSON string
+        });
+
+        // Redirect ke halaman pengolahan surat keterangan lengkap
+        window.location.href = `menu_surat.html?${urlParams.toString()}`;
+    }
+
+    function closeDataPopup() {
+        document.getElementById('data-popup').style.display = 'none';
+    }
+
+    function continueToNextPage() {
+        if (!selectedRowData) {
+            alert('Silakan pilih baris terlebih dahulu.');
+            return;
+        }
+
+        // Kirim data ke halaman berikutnya (misalnya ke "dasboar_surat.html")
+        const urlParams = new URLSearchParams();
+        urlParams.append('kode', selectedRowData[0]);
+        urlParams.append('kk', selectedRowData[1]);
+        urlParams.append('nik', selectedRowData[2]);
+        urlParams.append('nama', selectedRowData[3]);
+        urlParams.append('tempatlahir', selectedRowData[4]);
+        urlParams.append('tgllahir', selectedRowData[5]);
+        urlParams.append('status', selectedRowData[6]);
+        urlParams.append('jeniskelamin', selectedRowData[7]);
+        urlParams.append('pekerjaan', selectedRowData[8]);
+        urlParams.append('alamatdusun', selectedRowData[9]);
+        urlParams.append('desa', selectedRowData[10]);
+
+        // Redirect ke halaman pengolahan surat keterangan lengkap
+        window.location.href = `menu_surat.html?${urlParams.toString()}`;
+    }
+
+    function addData() {
+        // Implementasi penyimpanan data ke API
+        alert('Data disimpan! (Fungsi belum diimplementasikan)');
+        toggleForm();
+    }
+</script>
+</body>
+</html>
